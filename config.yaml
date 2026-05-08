@@ -1,0 +1,80 @@
+# GrassFire-Agent-MAS 全局配置
+
+system:
+  name: "GrassFire-Agent-MAS"
+  version: "1.0.0"
+  log_level: "INFO"
+  coordinator_interval: 5  # 协调器轮询间隔（秒）
+
+satellite:
+  name: "SatelliteAgent"
+  enabled: true
+  api_endpoint: "https://modis-api.example.com/thermal"
+  region:
+    lat_min: 41.2
+    lat_max: 43.5
+    lon_min: 111.5
+    lon_max: 114.3
+  confidence_threshold: 0.65
+  scan_interval: 300  # 卫星扫描间隔（秒）
+
+uav:
+  name: "UAVAgent"
+  enabled: true
+  model_path: "models/yolov8n_grassfire.pt"
+  input_size: [640, 640]
+  fp16: true
+  device: "cuda:0"  # 或 "cpu"
+  confidence_threshold: 0.70
+  nms_threshold: 0.45
+  max_detections: 50
+  patrol_altitude: 120  # 巡飞高度（米）
+
+ground:
+  name: "GroundAgent"
+  enabled: true
+  edge_nodes:
+    - ip: "192.168.1.101"
+      port: 8080
+      sensors: ["temperature", "humidity", "smoke", "co"]
+    - ip: "192.168.1.102"
+      port: 8080
+      sensors: ["temperature", "smoke"]
+    - ip: "192.168.1.103"
+      port: 8080
+      sensors: ["humidity", "pm25"]
+  anomaly_threshold:
+    temperature: 45.0   # 温度阈值（°C）
+    co: 10.0            # CO 阈值（ppm）
+    pm25: 80.0          # PM2.5 阈值（μg/m³）
+  poll_interval: 10     # 轮询间隔（秒）
+
+gan:
+  name: "PhysicsGAN"
+  enabled: true
+  cfd_config:
+    wind_speed: 6.2
+    wind_direction: 225   # 风向（度）
+    temperature: 28.0
+    humidity: 45.0
+    vegetation_type: "grassland"
+  sample_count: 128
+  match_threshold: 0.85
+
+rl:
+  name: "RLDecisionEngine"
+  enabled: true
+  model_path: "models/rl_policy_net.pth"
+  action_space:
+    max_uav: 5
+    max_ground_patrol: 3
+  reward_weights:
+    detection_accuracy: 1.0
+    response_time: -0.5
+    resource_cost: -0.3
+
+output:
+  push_to_command_center: true
+  command_center_endpoint: "https://emergency.example.com/api/alerts"
+  save_local: true
+  output_dir: "./outputs"
